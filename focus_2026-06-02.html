@@ -4,22 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Boletim Focus</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <style>
-:root {
-  color-scheme: light;
-  --bg:#f9fafb;--surface:#ffffff;--border:#e5e7eb;--text:#111827;--muted:#6b7280;
-  --blue:#1a56db;--green:#057a55;--red:#e02424;--orange:#f05a28;
-  --yellow-bg:#fff7ed;--red-bg:#fee2e2;
-}
-[data-theme="dark"] {
-  color-scheme: dark;
-  --bg:#0f172a;--surface:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;
-  --yellow-bg:#431407;--red-bg:#450a0a;
-}
+:root{color-scheme:light;--bg:#f9fafb;--surface:#ffffff;--border:#e5e7eb;--text:#111827;--muted:#6b7280;--blue:#1a56db;--green:#057a55;--red:#e02424;--orange:#f05a28;--yellow-bg:#fff7ed;--red-bg:#fee2e2;}
+[data-theme="dark"]{color-scheme:dark;--bg:#0f172a;--surface:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--yellow-bg:#431407;--red-bg:#450a0a;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 body{font-family:system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.65;background:var(--bg);color:var(--text);}
-#progress-bar{position:fixed;top:0;left:0;height:3px;width:0%;background:var(--orange);z-index:1000;transition:width .1s;}
+#alert-band{height:5px;width:100%;}
+#alert-band.band-critico{background:var(--red);}
+#alert-band.band-atencao{background:var(--orange);}
+#alert-band.band-ok{background:var(--green);}
+#progress-bar{position:fixed;top:5px;left:0;height:3px;width:0%;background:var(--blue);z-index:1000;transition:width .1s;}
 nav{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--border);z-index:999;}
 .nav-inner{max-width:820px;margin:0 auto;padding:.5rem 1rem;display:flex;gap:.25rem;overflow-x:auto;scrollbar-width:none;align-items:center;}
 .nav-inner::-webkit-scrollbar{display:none;}
@@ -41,6 +37,9 @@ h2{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:1rem;padding
 .card-value{font-size:1.35rem;font-weight:700;}
 .card-var{font-size:.75rem;margin-top:.2rem;}
 .card-trend{font-size:.7rem;color:var(--muted);margin-top:.15rem;}
+.card-sparkline{margin-top:.5rem;display:flex;justify-content:center;opacity:.85;}
+.sparkline-path{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.spark-up{stroke:var(--red);} .spark-down{stroke:var(--green);} .spark-stable{stroke:var(--muted);} .spark-up-good{stroke:var(--green);}
 .c-up{color:var(--red);} .c-down{color:var(--green);} .c-stable{color:var(--muted);} .c-up-good{color:var(--green);}
 .alert-box{border-radius:8px;padding:.875rem 1rem;margin-bottom:.75rem;display:flex;align-items:flex-start;gap:.6rem;}
 .alert-critical{background:var(--red-bg);border:1px solid var(--red);}
@@ -59,6 +58,10 @@ td{border:1px solid var(--border);padding:.6rem .75rem;background:var(--surface)
 td.t-up{color:var(--red);font-weight:600;} td.t-down{color:var(--green);font-weight:600;} td.t-stable{color:var(--muted);}
 td.t-up-good{color:var(--green);font-weight:600;} td.t-down-bad{color:var(--red);font-weight:600;}
 tr:hover td{background:color-mix(in srgb,var(--blue) 4%,var(--surface));}
+.sem{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+.sem-ok{background:var(--green);} .sem-atencao{background:var(--orange);} .sem-critico{background:var(--red);} .sem-neutro{background:var(--muted);}
+.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1rem .75rem;margin-top:1rem;}
+.chart-wrap canvas{max-height:200px;}
 .accordion-item{border:1px solid var(--border);border-radius:6px;margin-bottom:.5rem;overflow:hidden;}
 .accordion-btn{width:100%;text-align:left;background:var(--surface);border:none;padding:.75rem 1rem;font-size:.9rem;font-weight:600;cursor:pointer;color:var(--text);display:flex;justify-content:space-between;align-items:center;}
 .accordion-btn:hover{background:color-mix(in srgb,var(--blue) 5%,var(--surface));}
@@ -81,14 +84,19 @@ tr:hover td{background:color-mix(in srgb,var(--blue) 4%,var(--surface));}
 </style>
 </head>
 <body>
+<div id="alert-band"></div>
 <div id="progress-bar"></div>
 <nav><div class="nav-inner" id="nav-links"></div></nav>
 <main id="main-content"></main>
-
 <script>
 /* ================================================================
    DADOS DA SEMANA — o agente substitui apenas este bloco a cada run
-   Estrutura: ver comentários abaixo
+   NOVO CAMPO: historico — array com últimas semanas do CSV
+   (mais antiga primeiro, mais recente por último). Exemplo:
+   historico: [
+     { data:"25/05", ipca:5.04, pib:1.89, selic:13.25, cambio:5.17 },
+     { data:"02/06", ipca:5.09, pib:1.90, selic:13.25, cambio:5.16 }
+   ]
    ================================================================ */
 const DADOS = {
   referencia: "2 de junho de 2026",
@@ -134,6 +142,10 @@ const DADOS = {
     { titulo: "CNN Brasil — Focus: Mercado passa a ver Selic a 13,25% em 2026", url: "https://www.cnnbrasil.com.br/economia/macroeconomia/focus-mercado-eleva-projecao-e-passa-a-ver-selic-a-1325-em-2026/" },
     { titulo: "Banco Central do Brasil — Boletim Focus", url: "https://www.bcb.gov.br/publicacoes/focus" }
   ],
+  historico: [
+    { data:"25/05", ipca:5.04, pib:1.89, selic:13.25, cambio:5.17 },
+    { data:"02/06", ipca:5.09, pib:1.90, selic:13.25, cambio:5.16 }
+  ],
   glossario: [
     { termo:"IPCA", def:"Inflação oficial do Brasil medida pelo IBGE. Meta do Banco Central: 3%, com teto de 4,5%." },
     { termo:"IGP-M", def:"Inflação medida pela FGV, usada como base de reajuste em contratos de aluguel e energia elétrica." },
@@ -151,104 +163,143 @@ const DADOS = {
 /* ================================================================
    MOTOR DE RENDERIZAÇÃO — NÃO MODIFICAR
    ================================================================ */
+function dirClass(dir){return{up:'c-up',down:'c-down',stable:'c-stable',up_good:'c-up-good',down_bad:'c-down'}[dir]||'c-stable';}
+function tdClass(dir){return{up:'t-up',down:'t-down',stable:'t-stable',up_good:'t-up-good',down_bad:'t-down-bad'}[dir]||'t-stable';}
 
-// Cores por direção e tipo de indicador
-// varDir: "up" = ruim (vermelho) p/ IPCA/Selic/IGP-M/câmbio
-//         "up_good" = bom (verde) p/ PIB
-//         "down" = bom (verde) p/ IPCA/Selic/câmbio
-//         "stable" = neutro
-function dirClass(dir) {
-  return { up:'c-up', down:'c-down', stable:'c-stable', up_good:'c-up-good', down_bad:'c-down' }[dir] || 'c-stable';
+function semaforoClass(indicador,valorStr){
+  const v=parseFloat((valorStr||'').replace(',','.').replace('%','').replace('R$','').replace('−','-').replace('–','-'));
+  if(isNaN(v))return 'sem-neutro';
+  const ind=indicador.toLowerCase();
+  if(ind.includes('ipca'))return v>6?'sem-critico':v>4.5?'sem-atencao':'sem-ok';
+  if(ind.includes('igp-m'))return v>7?'sem-atencao':'sem-ok';
+  if(ind.includes('selic'))return v>14.75?'sem-atencao':'sem-ok';
+  if(ind.includes('pib'))return v<1?'sem-atencao':'sem-ok';
+  if(ind.includes('câmbio'))return v>6?'sem-critico':'sem-ok';
+  if(ind.includes('resultado primário'))return v<-1.5?'sem-critico':v<-1?'sem-atencao':'sem-ok';
+  if(ind.includes('dívida líquida'))return v>90?'sem-critico':'sem-ok';
+  return 'sem-neutro';
 }
-function tdClass(dir) {
-  return { up:'t-up', down:'t-down', stable:'t-stable', up_good:'t-up-good', down_bad:'t-down-bad' }[dir] || 't-stable';
+
+function sparklineSVG(values,dir){
+  const valid=(values||[]).filter(v=>v!=null&&!isNaN(v));
+  if(valid.length<2)return '';
+  const w=72,h=22,pad=2;
+  const min=Math.min(...valid),max=Math.max(...valid),range=max-min||0.0001;
+  const pts=valid.map((v,i)=>{
+    const x=pad+(i/(valid.length-1))*(w-pad*2);
+    const y=(h-pad)-((v-min)/range)*(h-pad*2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const cls={up:'spark-up',down:'spark-down',stable:'spark-stable',up_good:'spark-up-good'}[dir]||'spark-stable';
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline points="${pts}" class="sparkline-path ${cls}"/></svg>`;
 }
 
-function render() {
-  if (!DADOS) { document.body.innerHTML = '<p style="padding:2rem;color:red">Erro: bloco DADOS não foi substituído no template.</p>'; return; }
+let _chart=null;
+function mountChart(historico){
+  const canvas=document.getElementById('hist-chart');
+  if(!canvas||!historico||historico.length<2)return;
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  const gc=dark?'rgba(255,255,255,.07)':'rgba(0,0,0,.05)';
+  const tc=dark?'#94a3b8':'#6b7280';
+  if(_chart){_chart.destroy();_chart=null;}
+  _chart=new Chart(canvas,{
+    type:'line',
+    data:{
+      labels:historico.map(h=>h.data),
+      datasets:[
+        {label:'IPCA (%)',data:historico.map(h=>h.ipca),borderColor:'#e02424',backgroundColor:'rgba(224,36,36,.07)',tension:.35,pointRadius:3,borderWidth:2},
+        {label:'Selic (%)',data:historico.map(h=>h.selic),borderColor:'#1a56db',backgroundColor:'rgba(26,86,219,.07)',tension:.35,pointRadius:3,borderWidth:2},
+        {label:'Câmbio (R$)',data:historico.map(h=>h.cambio),borderColor:'#f05a28',backgroundColor:'rgba(240,90,40,.07)',tension:.35,pointRadius:3,borderWidth:2,yAxisID:'y2'}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:true,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{labels:{color:tc,font:{size:11},boxWidth:12,padding:12}},
+        tooltip:{backgroundColor:dark?'#1e293b':'#fff',titleColor:tc,bodyColor:tc,borderColor:dark?'#334155':'#e5e7eb',borderWidth:1}
+      },
+      scales:{
+        x:{ticks:{color:tc,font:{size:10}},grid:{color:gc}},
+        y:{ticks:{color:tc,font:{size:10},callback:v=>v+'%'},grid:{color:gc},title:{display:true,text:'% a.a.',color:tc,font:{size:10}}},
+        y2:{position:'right',ticks:{color:tc,font:{size:10},callback:v=>'R$'+v},grid:{display:false},title:{display:true,text:'R$/USD',color:tc,font:{size:10}}}
+      }
+    }
+  });
+}
 
-  // Título dinâmico
-  document.title = 'Boletim Focus — ' + DADOS.referencia;
+function render(){
+  if(!DADOS){document.body.innerHTML='<p style="padding:2rem;color:red">Erro: DADOS não foi substituído no template.</p>';return;}
+  document.title='Boletim Focus — '+DADOS.referencia;
 
-  // NAV
-  const navLinks = document.getElementById('nav-links');
-  const sections = ['resumo','alertas','indicadores','analise','fontes','glossario'];
-  const labels   = ['Resumo','Alertas','Indicadores','Análise','Fontes','Glossário'];
-  navLinks.innerHTML = sections.map((s,i) =>
-    `<a href="#${s}" class="nav-link">${labels[i]}</a>`
-  ).join('') + `<button id="theme-toggle">🌙 Escuro</button>`;
+  const band=document.getElementById('alert-band');
+  const hasCritico=DADOS.alertas.some(a=>a.nivel==='critico');
+  const hasAtencao=DADOS.alertas.some(a=>a.nivel==='atencao');
+  band.className=hasCritico?'band-critico':hasAtencao?'band-atencao':'band-ok';
 
-  // MAIN
-  const main = document.getElementById('main-content');
-  main.innerHTML = `
+  const hist=DADOS.historico||[];
+  const sparks=[
+    sparklineSVG(hist.map(h=>h.ipca),'up'),
+    sparklineSVG(hist.map(h=>h.pib),'up_good'),
+    sparklineSVG(hist.map(h=>h.selic),'stable'),
+    sparklineSVG(hist.map(h=>h.cambio),'down')
+  ];
+
+  document.getElementById('nav-links').innerHTML=
+    ['resumo','alertas','indicadores','analise','fontes','glossario']
+    .map((s,i)=>`<a href="#${s}" class="nav-link">${['Resumo','Alertas','Indicadores','Análise','Fontes','Glossário'][i]}</a>`)
+    .join('')+`<button id="theme-toggle">🌙 Escuro</button>`;
+
+  document.getElementById('main-content').innerHTML=`
     <header>
       <h1>Boletim Focus</h1>
       <p>Referência: <strong>${DADOS.referencia}</strong> · Banco Central do Brasil · Gerado em ${DADOS.gerado}</p>
     </header>
-
-    <!-- RESUMO -->
     <section id="resumo">
       <h2>📋 Resumo Executivo</h2>
       <div class="resumo-text">${DADOS.resumo}</div>
-      <div class="cards-grid">${DADOS.cards.map(c => `
+      <div class="cards-grid">${DADOS.cards.map((c,i)=>`
         <div class="card">
           <div class="card-label">${c.label}</div>
           <div class="card-value">${c.valor}</div>
           <div class="card-var ${dirClass(c.varDir)}">${c.var}</div>
           <div class="card-trend">${c.trend}</div>
+          ${sparks[i]?`<div class="card-sparkline">${sparks[i]}</div>`:''}
         </div>`).join('')}
       </div>
+      ${hist.length>=2?`<div class="chart-wrap"><canvas id="hist-chart"></canvas></div>`:''}
     </section>
-
-    <!-- ALERTAS -->
     <section id="alertas">
       <h2>🚨 Alertas</h2>
-      ${DADOS.alertas.length === 0
-        ? '<p class="no-alerts">Nenhum alerta ativo nesta semana.</p>'
-        : [
-            ...DADOS.alertas.filter(a => a.nivel === 'critico').map(a => `
-              <div class="alert-box alert-critical">
-                <span class="alert-icon">🔴</span>
-                <div class="alert-text"><strong>Nível Crítico</strong>${a.texto}</div>
-              </div>`),
-            ...DADOS.alertas.filter(a => a.nivel === 'atencao').map(a => `
-              <div class="alert-box alert-attention">
-                <span class="alert-icon">⚠️</span>
-                <div class="alert-text"><strong>Nível Atenção</strong>${a.texto}</div>
-              </div>`)
-          ].join('')
-      }
+      ${DADOS.alertas.length===0
+        ?'<p class="no-alerts">Nenhum alerta ativo nesta semana.</p>'
+        :[...DADOS.alertas.filter(a=>a.nivel==='critico').map(a=>`
+            <div class="alert-box alert-critical"><span class="alert-icon">🔴</span>
+              <div class="alert-text"><strong>Nível Crítico</strong>${a.texto}</div></div>`),
+           ...DADOS.alertas.filter(a=>a.nivel==='atencao').map(a=>`
+            <div class="alert-box alert-attention"><span class="alert-icon">⚠️</span>
+              <div class="alert-text"><strong>Nível Atenção</strong>${a.texto}</div></div>`)
+          ].join('')}
     </section>
-
-    <!-- INDICADORES -->
     <section id="indicadores">
       <h2>📊 Tabela de Indicadores</h2>
-      <div class="table-wrap">
-        <table id="tabela">
-          <thead><tr>
-            <th data-col="0">Indicador</th>
-            <th data-col="1">Ano Corrente</th>
-            <th data-col="2">Próx. Ano</th>
-            <th data-col="3">Var. Semana</th>
-          </tr></thead>
-          <tbody id="tabela-body">
-            ${DADOS.tabela.map(r => `
-              <tr>
-                <td>${r.indicador}</td>
-                <td>${r.atual}</td>
-                <td>${r.prox || ''}</td>
-                <td class="${tdClass(r.varDir)}">${r.var}</td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>
-      ${DADOS.obsTabela ? `<p class="obs">${DADOS.obsTabela}</p>` : ''}
+      <div class="table-wrap"><table id="tabela">
+        <thead><tr>
+          <th data-col="0">Indicador</th><th data-col="1">Ano Corrente</th>
+          <th data-col="2">Próx. Ano</th><th data-col="3">Var. Semana</th>
+        </tr></thead>
+        <tbody id="tabela-body">
+          ${DADOS.tabela.map(r=>`<tr>
+            <td><span class="sem ${semaforoClass(r.indicador,r.atual)}"></span>${r.indicador}</td>
+            <td>${r.atual}</td><td>${r.prox||''}</td>
+            <td class="${tdClass(r.varDir)}">${r.var}</td></tr>`).join('')}
+        </tbody>
+      </table></div>
+      ${DADOS.obsTabela?`<p class="obs">${DADOS.obsTabela}</p>`:''}
     </section>
-
-    <!-- ANÁLISE -->
     <section id="analise">
       <h2>🔍 O que mudou e por quê</h2>
-      ${DADOS.analise.map(a => `
+      ${DADOS.analise.map(a=>`
         <div class="accordion-item">
           <button class="accordion-btn">${a.titulo}<span class="accordion-arrow">▾</span></button>
           <div class="accordion-body"><div class="accordion-content">
@@ -257,76 +308,65 @@ function render() {
           </div></div>
         </div>`).join('')}
     </section>
-
-    <!-- FONTES -->
     <section id="fontes">
       <h2>🔗 Fontes</h2>
       <ul class="fontes-list">
-        ${DADOS.fontes.map(f => `<li><a href="${f.url}" target="_blank" rel="noopener">${f.titulo}</a></li>`).join('')}
+        ${DADOS.fontes.map(f=>`<li><a href="${f.url}" target="_blank" rel="noopener">${f.titulo}</a></li>`).join('')}
       </ul>
     </section>
-
-    <!-- GLOSSÁRIO -->
     <section id="glossario">
       <h2>📖 Glossário</h2>
       <ul class="glossario-list">
-        ${DADOS.glossario.map(g => `<li><strong>${g.termo}:</strong> ${g.def}</li>`).join('')}
+        ${DADOS.glossario.map(g=>`<li><strong>${g.termo}:</strong> ${g.def}</li>`).join('')}
       </ul>
-    </section>
-  `;
+    </section>`;
 
-  // PROGRESS BAR
-  const bar = document.getElementById('progress-bar');
-  document.addEventListener('scroll', () => {
-    const el = document.documentElement;
-    bar.style.width = (el.scrollTop / (el.scrollHeight - el.clientHeight) * 100) + '%';
+  if(hist.length>=2)setTimeout(()=>mountChart(hist),0);
+
+  const bar=document.getElementById('progress-bar');
+  document.addEventListener('scroll',()=>{
+    const el=document.documentElement;
+    bar.style.width=(el.scrollTop/(el.scrollHeight-el.clientHeight)*100)+'%';
   });
 
-  // THEME TOGGLE
-  document.getElementById('theme-toggle').addEventListener('click', function() {
-    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-    document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
-    this.textContent = dark ? '🌙 Escuro' : '☀️ Claro';
+  document.getElementById('theme-toggle').addEventListener('click',function(){
+    const dark=document.documentElement.getAttribute('data-theme')==='dark';
+    document.documentElement.setAttribute('data-theme',dark?'light':'dark');
+    this.textContent=dark?'🌙 Escuro':'☀️ Claro';
+    if(hist.length>=2)setTimeout(()=>mountChart(hist),0);
   });
 
-  // ACTIVE NAV
-  document.querySelectorAll('section[id]').forEach(sec =>
-    new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-          const a = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
-          if (a) a.classList.add('active');
-        }
-      });
-    }, { rootMargin: '-30% 0px -60% 0px' }).observe(sec)
+  document.querySelectorAll('section[id]').forEach(sec=>
+    new IntersectionObserver(entries=>entries.forEach(e=>{
+      if(e.isIntersecting){
+        document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+        const a=document.querySelector(`.nav-link[href="#${e.target.id}"]`);
+        if(a)a.classList.add('active');
+      }
+    }),{rootMargin:'-30% 0px -60% 0px'}).observe(sec)
   );
 
-  // SORTABLE TABLE
-  let sortCol = -1, sortDir = 1;
-  document.querySelectorAll('#tabela th[data-col]').forEach(th => {
-    th.addEventListener('click', () => {
-      const col = parseInt(th.dataset.col);
-      sortDir = sortCol === col ? -sortDir : 1;
-      sortCol = col;
-      document.querySelectorAll('#tabela th').forEach(h => h.classList.remove('asc','desc'));
-      th.classList.add(sortDir === 1 ? 'asc' : 'desc');
-      const tbody = document.getElementById('tabela-body');
+  let sortCol=-1,sortDir=1;
+  document.querySelectorAll('#tabela th[data-col]').forEach(th=>{
+    th.addEventListener('click',()=>{
+      const col=parseInt(th.dataset.col);
+      sortDir=sortCol===col?-sortDir:1;sortCol=col;
+      document.querySelectorAll('#tabela th').forEach(h=>h.classList.remove('asc','desc'));
+      th.classList.add(sortDir===1?'asc':'desc');
+      const tbody=document.getElementById('tabela-body');
       Array.from(tbody.querySelectorAll('tr'))
-        .sort((a,b) => {
-          const at = a.querySelectorAll('td')[col]?.textContent.trim() || '';
-          const bt = b.querySelectorAll('td')[col]?.textContent.trim() || '';
-          return at.localeCompare(bt, 'pt', {numeric:true}) * sortDir;
-        }).forEach(r => tbody.appendChild(r));
+        .sort((a,b)=>{
+          const at=a.querySelectorAll('td')[col]?.textContent.trim()||'';
+          const bt=b.querySelectorAll('td')[col]?.textContent.trim()||'';
+          return at.localeCompare(bt,'pt',{numeric:true})*sortDir;
+        }).forEach(r=>tbody.appendChild(r));
     });
   });
 
-  // ACCORDION
-  document.querySelectorAll('.accordion-btn').forEach(btn =>
-    btn.addEventListener('click', () => btn.closest('.accordion-item').classList.toggle('open'))
+  document.querySelectorAll('.accordion-btn').forEach(btn=>
+    btn.addEventListener('click',()=>btn.closest('.accordion-item').classList.toggle('open'))
   );
 }
-
 render();
 </script>
 </body>
