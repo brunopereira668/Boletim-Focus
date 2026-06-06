@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boletim Focus — Arquivo</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9fafb; --surface:#ffffff; --border:#e5e7eb; --text:#111827; --muted:#6b7280;
+  --blue:#1a56db; --green:#057a55; --red:#e02424; --orange:#f05a28;
+  --yellow-bg:#fff7ed; --red-bg:#fee2e2;
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:#0f172a; --surface:#1e293b; --border:#334155; --text:#f1f5f9; --muted:#94a3b8;
+  --yellow-bg:#431407; --red-bg:#450a0a;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; font-size: 16px; line-height: 1.6; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* HEADER */
+.site-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 1.25rem 1rem;
+}
+.site-header-inner {
+  max-width: 860px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+}
+.site-header h1 { font-size: 1.35rem; font-weight: 700; color: var(--blue); }
+.site-header p { font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 20px;
+  padding: 0.25rem 0.75rem; cursor: pointer; font-size: 0.85rem; color: var(--muted); white-space: nowrap;
+}
+#theme-toggle:hover { color: var(--text); }
+
+/* MAIN */
+main { max-width: 860px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+/* DESTAQUE — ÚLTIMO BOLETIM */
+#ultimo-boletim { margin-bottom: 2rem; }
+#ultimo-boletim h2 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.75rem; }
+.card-destaque {
+  background: var(--surface);
+  border: 2px solid var(--blue);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;
+}
+.card-destaque-info h3 { font-size: 1.1rem; font-weight: 700; color: var(--blue); }
+.card-destaque-info p { font-size: 0.85rem; color: var(--muted); margin-top: 0.2rem; }
+.card-destaque-metricas { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+.metrica { text-align: center; }
+.metrica-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.metrica-valor { font-size: 1.1rem; font-weight: 700; margin-top: 0.1rem; }
+.card-destaque-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.btn-primary {
+  background: var(--blue); color: #fff; border: none; border-radius: 6px;
+  padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap;
+}
+.btn-primary:hover { opacity: 0.9; }
+.badges { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.badge-critico { background: var(--red-bg); color: var(--red); border: 1px solid var(--red); border-radius: 4px; font-size: 0.7rem; padding: 0.15rem 0.4rem; font-weight: 600; }
+.badge-atencao { background: var(--yellow-bg); color: var(--orange); border: 1px solid var(--orange); border-radius: 4px; font-size: 0.7rem; padding: 0.15rem 0.4rem; font-weight: 600; }
+.badge-ok { background: #f0fdf4; color: var(--green); border: 1px solid var(--green); border-radius: 4px; font-size: 0.7rem; padding: 0.15rem 0.4rem; font-weight: 600; }
+
+/* SELETOR DE MÊS */
+#arquivo { margin-bottom: 0.75rem; }
+#arquivo h2 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.75rem; }
+.meses-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.mes-btn {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  padding: 0.3rem 0.85rem; font-size: 0.8rem; cursor: pointer; color: var(--muted); transition: all 0.15s;
+}
+.mes-btn:hover { border-color: var(--blue); color: var(--blue); }
+.mes-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+
+/* GRID DE BOLETINS */
+.boletins-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
+.card-boletim {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem;
+  display: flex; flex-direction: column; gap: 0.6rem; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.card-boletim:hover { border-color: var(--blue); box-shadow: 0 2px 8px color-mix(in srgb, var(--blue) 15%, transparent); }
+.card-boletim-data { font-size: 0.8rem; font-weight: 700; color: var(--blue); }
+.card-boletim-metricas { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; }
+.card-metrica { font-size: 0.75rem; }
+.card-metrica-label { color: var(--muted); }
+.card-metrica-valor { font-weight: 600; }
+.card-boletim-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 0.25rem; }
+.btn-ver {
+  background: none; border: 1px solid var(--blue); border-radius: 4px;
+  padding: 0.25rem 0.65rem; font-size: 0.75rem; color: var(--blue); cursor: pointer; text-decoration: none; font-weight: 500;
+}
+.btn-ver:hover { background: var(--blue); color: #fff; }
+
+/* EMPTY STATE */
+.empty { color: var(--muted); font-size: 0.875rem; font-style: italic; padding: 1rem 0; }
+
+/* LOADING */
+#loading { text-align: center; padding: 3rem; color: var(--muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="site-header-inner">
+    <div>
+      <h1>📊 Boletim Focus</h1>
+      <p>Banco Central do Brasil · Arquivo de edições semanais</p>
+    </div>
+    <button id="theme-toggle">🌙 Escuro</button>
+  </div>
+</header>
+
+<main>
+  <div id="loading">Carregando boletins...</div>
+  <div id="conteudo" style="display:none">
+    <section id="ultimo-boletim">
+      <h2>📌 Edição mais recente</h2>
+      <div id="card-destaque"></div>
+    </section>
+    <section id="arquivo">
+      <h2>📁 Arquivo por mês</h2>
+      <div class="meses-tabs" id="meses-tabs"></div>
+      <div class="boletins-grid" id="boletins-grid"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+// TEMA
+document.getElementById('theme-toggle').addEventListener('click', function() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+  this.textContent = dark ? '🌙 Escuro' : '☀️ Claro';
+});
+
+// HELPERS
+const MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function mesLabel(yyyymm) {
+  const [y, m] = yyyymm.split('-');
+  return MESES_PT[parseInt(m) - 1] + ' ' + y;
+}
+
+function badgesHTML(alertas) {
+  if (!alertas || alertas.length === 0) return '<span class="badge-ok">✓ Sem alertas</span>';
+  return alertas.map(a =>
+    a === 'critico'
+      ? '<span class="badge-critico">🔴 Crítico</span>'
+      : '<span class="badge-atencao">⚠️ Atenção</span>'
+  ).join('');
+}
+
+function renderDestaque(b) {
+  document.getElementById('card-destaque').innerHTML = `
+    <div class="card-destaque">
+      <div class="card-destaque-info">
+        <h3>${b.label}</h3>
+        <p>Edição mais recente</p>
+      </div>
+      <div class="card-destaque-metricas">
+        <div class="metrica"><div class="metrica-label">IPCA</div><div class="metrica-valor">${b.ipca}</div></div>
+        <div class="metrica"><div class="metrica-label">Selic</div><div class="metrica-valor">${b.selic}</div></div>
+        <div class="metrica"><div class="metrica-label">Câmbio</div><div class="metrica-valor">R$${b.cambio}</div></div>
+        <div class="metrica"><div class="metrica-label">PIB</div><div class="metrica-valor">${b.pib}</div></div>
+      </div>
+      <div class="card-destaque-actions">
+        <div class="badges">${badgesHTML(b.alertas)}</div>
+        <a href="${b.arquivo}" class="btn-primary">Abrir boletim →</a>
+      </div>
+    </div>`;
+}
+
+function renderGrid(boletins) {
+  document.getElementById('boletins-grid').innerHTML = boletins.length === 0
+    ? '<p class="empty">Nenhum boletim publicado neste mês.</p>'
+    : boletins.map(b => `
+        <div class="card-boletim">
+          <div class="card-boletim-data">${b.label}</div>
+          <div class="card-boletim-metricas">
+            <div class="card-metrica"><div class="card-metrica-label">IPCA</div><div class="card-metrica-valor">${b.ipca}</div></div>
+            <div class="card-metrica"><div class="card-metrica-label">Selic</div><div class="card-metrica-valor">${b.selic}</div></div>
+            <div class="card-metrica"><div class="card-metrica-label">Câmbio</div><div class="card-metrica-valor">R$${b.cambio}</div></div>
+            <div class="card-metrica"><div class="card-metrica-label">PIB</div><div class="card-metrica-valor">${b.pib}</div></div>
+          </div>
+          <div class="card-boletim-footer">
+            <div class="badges">${badgesHTML(b.alertas)}</div>
+            <a href="${b.arquivo}" class="btn-ver">Abrir →</a>
+          </div>
+        </div>`).join('');
+}
+
+// MAIN
+fetch('./boletins.json?t=' + Date.now())
+  .then(r => r.json())
+  .then(data => {
+    const boletins = data.boletins.slice().sort((a, b) => b.data.localeCompare(a.data));
+    if (boletins.length === 0) { document.getElementById('loading').textContent = 'Nenhum boletim publicado ainda.'; return; }
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('conteudo').style.display = '';
+
+    // Destaque: mais recente
+    renderDestaque(boletins[0]);
+
+    // Agrupar por mês
+    const porMes = {};
+    boletins.forEach(b => {
+      const ym = b.data.substring(0, 7);
+      if (!porMes[ym]) porMes[ym] = [];
+      porMes[ym].push(b);
+    });
+    const meses = Object.keys(porMes).sort((a, b) => b.localeCompare(a));
+
+    // Tabs de meses
+    const tabsEl = document.getElementById('meses-tabs');
+    meses.forEach((ym, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'mes-btn' + (i === 0 ? ' active' : '');
+      btn.textContent = mesLabel(ym);
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mes-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderGrid(porMes[ym]);
+      });
+      tabsEl.appendChild(btn);
+    });
+
+    // Grid inicial: mês mais recente
+    renderGrid(porMes[meses[0]]);
+  })
+  .catch(() => {
+    document.getElementById('loading').textContent = 'Erro ao carregar boletins.json.';
+  });
+</script>
+</body>
+</html>
