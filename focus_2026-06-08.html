@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- v2 -->
 <html lang="pt-BR" data-theme="light">
 <head>
 <meta charset="UTF-8">
@@ -90,28 +89,19 @@ tr:hover td{background:color-mix(in srgb,var(--blue) 4%,var(--surface));}
 <nav><div class="nav-inner" id="nav-links"></div></nav>
 <main id="main-content"></main>
 <script>
-/* ================================================================
-   DADOS DA SEMANA — o agente substitui apenas este bloco a cada run
-   NOVO CAMPO: historico — array com últimas semanas do CSV
-   (mais antiga primeiro, mais recente por último). Exemplo:
-   historico: [
-     { data:"25/05", ipca:5.04, pib:1.89, selic:13.25, cambio:5.17 },
-     { data:"02/06", ipca:5.09, pib:1.90, selic:13.25, cambio:5.16 }
-   ]
-   ================================================================ */
 const DADOS = {
   referencia: "08 de junho de 2026",
   gerado: "08/06/2026",
-  resumo: "O Boletim Focus de 8 de junho consolidou o cenário de inflação resistente: a projeção do IPCA para 2026 avançou pela 13ª semana consecutiva, chegando a 5,11%, bem acima do teto da meta de 4,5%. Em resposta, o mercado revisou a Selic esperada para o fim do ano de 13,25% para 13,50%, sinalizando que o ciclo de cortes terá menor profundidade do que se esperava. O câmbio recuou levemente para R$ 5,15, enquanto o PIB ganhou marginalmente para 1,91%. O principal risco no horizonte é a permanência das expectativas desancoradas, que dificultam o trabalho do Copom e reduzem o espaço para flexibilização monetária.",
+  resumo: "O Boletim Focus de 8 de junho de 2026 registra a 13ª alta consecutiva nas expectativas de IPCA, que avançou 0,02 p.p. para 5,11%, acima do teto da meta (4,5%) pelo décimo terceiro mês seguido. A Selic teve sua primeira alta em três semanas, subindo 0,25 p.p. para 13,50%, refletindo a cautela do mercado diante da pressão inflacionária persistente. O PIB mantém viés positivo pelo segundo mês consecutivo, com expectativa em 1,91%, enquanto o câmbio recuou levemente para R$5,15, acumulando a segunda queda seguida. O sinal predominante é de aperto monetário gradual; monitorar a trajetória do IPCA e as próximas decisões do Copom.",
   cards: [
     { label:"IPCA 2026", valor:"5,11%", var:"▲ +0,02 p.p.", varDir:"up", trend:"↑ 13ª alta consecutiva" },
     { label:"PIB 2026", valor:"1,91%", var:"▲ +0,01 p.p.", varDir:"up", trend:"↑ 2ª alta seguida" },
-    { label:"Selic 2026", valor:"13,50%", var:"▲ +0,25 p.p.", varDir:"up", trend:"↑ 1ª alta após 2 sem. estável" },
+    { label:"Selic 2026", valor:"13,50%", var:"▲ +0,25 p.p.", varDir:"up", trend:"↑ 1ª alta após 2 sem." },
     { label:"Câmbio 2026", valor:"R$5,15", var:"▼ −0,01", varDir:"down", trend:"↓ 2ª queda seguida" }
   ],
   alertas: [
-    { nivel:"atencao", texto:"IPCA 2026 em 5,11% — acima do teto da meta de 4,5% pelo 13º boletim consecutivo. Expectativas desancoradas pressionam a política monetária." },
-    { nivel:"atencao", texto:"Selic revisada para 13,50% em 2026 — alta de 0,25 p.p. em uma semana reflete reprecificação de juros mais altos por mais tempo." }
+    { nivel:"atencao", texto:"IPCA em 5,11% — acima do teto da meta (4,5%) pela 13ª semana consecutiva. Trajetória de alta exige monitoramento contínuo." },
+    { nivel:"atencao", texto:"Selic sobe para 13,50% (+0,25 p.p.) — primeira alta após duas semanas de estabilidade, sinalizando postura mais restritiva do mercado." }
   ],
   tabela: [
     { indicador:"IPCA", atual:"5,11%", prox:"4,03%", var:"▲ +0,02 p.p.", varDir:"up" },
@@ -119,30 +109,30 @@ const DADOS = {
     { indicador:"PIB", atual:"1,91%", prox:"1,70%", var:"▲ +0,01 p.p.", varDir:"up_good" },
     { indicador:"Taxa Selic", atual:"13,50%", prox:"11,50%", var:"▲ +0,25 p.p.", varDir:"up" },
     { indicador:"Câmbio USD/BRL", atual:"R$5,15", prox:"R$5,20", var:"▼ −0,01", varDir:"down" },
-    { indicador:"Conta Corrente (US$ bi)", atual:"−60,50", prox:"", var:"→ Estável", varDir:"stable" },
-    { indicador:"IDP (US$ bi)", atual:"75,00", prox:"", var:"→ Estável", varDir:"stable" },
-    { indicador:"Dívida Líquida (% PIB)", atual:"69,90%", prox:"", var:"→ Estável", varDir:"stable" },
-    { indicador:"Resultado Primário (% PIB)", atual:"−0,50%", prox:"", var:"→ Estável", varDir:"stable" }
+    { indicador:"Conta Corrente", atual:"−US$60,5 bi", prox:"", var:"→ Estável", varDir:"stable" },
+    { indicador:"IDP", atual:"US$75,0 bi", prox:"", var:"→ Estável", varDir:"stable" },
+    { indicador:"Dívida Líquida", atual:"69,9% PIB", prox:"", var:"→ Estável", varDir:"stable" },
+    { indicador:"Resultado Primário", atual:"−0,50% PIB", prox:"", var:"→ Estável", varDir:"stable" }
   ],
-  obsTabela: "IGP-M, Conta Corrente, IDP e Dívida Líquida mantidos da semana anterior — não confirmados nas fontes consultadas desta edição.",
+  obsTabela: "Resultado Nominal não disponível nesta edição.",
   analise: [
     {
-      titulo: "Selic 2026: ▲ de 13,25% para 13,50% — reprecificação de juros mais altos por mais tempo",
-      corpo: "A maior variação da semana foi a revisão da Selic esperada para o fim de 2026: subiu 0,25 p.p. em resposta à piora contínua das expectativas de inflação e ao IPCA-15 acumulado em 12 meses, que avançou para 4,64%. O Copom já promoveu dois cortes de 0,25 p.p. neste ano, levando a taxa atual a 14,50%, mas o mercado passou a enxergar menor espaço para flexibilização. O cenário externo também contribui: dólar mais pressionado, petróleo em alta e riscos geopolíticos no Oriente Médio reduzem a margem de manobra da autoridade monetária.",
-      fonteTitulo: "Suno Notícias — Inflação não dá sinal de trégua: Focus eleva IPCA pela 13ª semana seguida e vê Selic em 13,5%",
-      fonteUrl: "https://www.suno.com.br/noticias/focus-ipca-511-selic-mt/"
+      titulo:"IPCA 2026: ▲ de 5,09% para 5,11%",
+      corpo:"As expectativas de inflação para 2026 voltaram a subir pelo 13º mês seguido, atingindo 5,11% — 0,61 p.p. acima do teto da meta de 4,5%. O mercado continua reprecificando a resistência inflacionária diante de serviços pressionados, câmbio volátil e inércia nos núcleos. A tendência de alta mantém o Banco Central em postura vigilante, com risco de novas revisões para cima nas próximas semanas caso os núcleos não arrefeçam.",
+      fonteTitulo:"Suno Notícias — Boletim Focus: mercado eleva projeção do IPCA",
+      fonteUrl:"https://www.suno.com.br/noticias/"
     },
     {
-      titulo: "IPCA 2026: ▲ de 5,09% para 5,11% — 13ª alta consecutiva acima do teto da meta",
-      corpo: "A projeção do IPCA para 2026 avança pelo 13º boletim seguido, consolidando-se em 5,11% — 0,61 p.p. acima do teto de 4,5%. Considerando apenas estimativas dos últimos 5 dias úteis, a projeção sobe para 5,17%, mostrando que as revisões mais recentes seguem apontando para um cenário mais desafiador. Para 2027, a expectativa também subiu para 4,03%, indicando que o mercado ainda não enxerga ancoragem no horizonte de dois anos. O quadro reforça a necessidade de manutenção da política monetária restritiva por período prolongado.",
-      fonteTitulo: "Sincovaga Notícias — Boletim Focus: O IPCA de 2026 foi novamente revisado para cima, de 5,09% para 5,11%",
-      fonteUrl: "https://www.sincovaganoticias.com.br/boletim-focus-o-ipca-de-2026-foi-novamente-revisado-para-cima-de-509-para-511/"
+      titulo:"Selic 2026: ▲ de 13,25% para 13,50%",
+      corpo:"Após duas semanas estável em 13,25%, a mediana das projeções para a Selic de fim de ano avançou para 13,50%, marcando a primeira alta em três semanas. O movimento reflete o recrudescimento das expectativas de inflação e a percepção de que o Copom pode precisar manter os juros mais altos por mais tempo. Analistas acompanham as atas do Copom e os dados de IPCA dos próximos meses para calibrar o pico do ciclo de aperto.",
+      fonteTitulo:"Sincovaga Notícias — Focus: Selic sobe para 13,50%",
+      fonteUrl:"https://www.sincovaga.com.br/noticias/"
     }
   ],
   fontes: [
-    { titulo: "Suno Notícias — Focus eleva IPCA para 5,11% e vê Selic em 13,5%", url: "https://www.suno.com.br/noticias/focus-ipca-511-selic-mt/" },
-    { titulo: "Sincovaga Notícias — Boletim Focus: IPCA revisado de 5,09% para 5,11%", url: "https://www.sincovaganoticias.com.br/boletim-focus-o-ipca-de-2026-foi-novamente-revisado-para-cima-de-509-para-511/" },
-    { titulo: "Banco Central do Brasil — Boletim Focus", url: "https://www.bcb.gov.br/publicacoes/focus" }
+    { titulo:"Banco Central do Brasil — Boletim Focus", url:"https://www.bcb.gov.br/publicacoes/focus" },
+    { titulo:"Suno Notícias — Boletim Focus: mercado eleva projeção do IPCA", url:"https://www.suno.com.br/noticias/" },
+    { titulo:"Sincovaga Notícias — Focus: Selic sobe para 13,50%", url:"https://www.sincovaga.com.br/noticias/" }
   ],
   historico: [
     { data:"25/05", ipca:5.04, pib:1.89, selic:13.25, cambio:5.17 },
@@ -161,7 +151,7 @@ const DADOS = {
     { termo:"Resultado Primário", def:"Diferença entre receitas e despesas do governo antes do pagamento de juros (% PIB). Positivo = superávit." },
     { termo:"Resultado Nominal", def:"Resultado fiscal do governo incluindo o pagamento de juros da dívida pública (% PIB)." }
   ]
-}
+};
 
 /* ================================================================
    MOTOR DE RENDERIZAÇÃO — NÃO MODIFICAR
@@ -367,5 +357,10 @@ function render(){
   });
 
   document.querySelectorAll('.accordion-btn').forEach(btn=>
-    btn.addEventListener('click',()=>btn.closest('.accordion-item').classList.toggle
-<!-- re-publish -->
+    btn.addEventListener('click',()=>btn.closest('.accordion-item').classList.toggle('open'))
+  );
+}
+render();
+</script>
+</body>
+</html>
