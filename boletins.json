@@ -1,6 +1,18 @@
 {
   "boletins": [
     {
+      "data": "2026-06-19",
+      "label": "19 de junho de 2026",
+      "arquivo": "focus_2026-06-19.html",
+      "ipca": "5,33%",
+      "selic": "14,00%",
+      "cambio": "5,20",
+      "pib": "1,98%",
+      "alertas": [
+        "atencao"
+      ]
+    },
+    {
       "data": "2026-06-13",
       "label": "13 de junho de 2026",
       "arquivo": "focus_2026-06-13.html",
